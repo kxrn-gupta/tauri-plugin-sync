@@ -147,7 +147,7 @@
     <!-- Status Pill -->
     <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-100 text-[11px] sm:text-xs font-mono font-medium text-brand-700 mb-6 sm:mb-8 border border-brand-200">
       <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-      <span>Tauri v2 · SQLite CDC · 13/13 Passing</span>
+      <span>Tauri v2 · SQLite CDC · 15/15 Passing</span>
     </div>
 
     <!-- Main Headline: Fluid scaling for iPhone, iPad, Mac & 4K -->
@@ -236,10 +236,10 @@
       <!-- Responsive Bottom Status Bar (2x2 Grid on Mobile, Flex on Desktop) -->
       <div class="p-3 sm:px-5 sm:py-3 bg-brand-50/80 border-t border-brand-200/80 text-xs font-mono text-brand-600">
         <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-between gap-2 sm:gap-x-5 text-[11px] sm:text-xs">
-          <div>Write Latency: <strong class="text-brand-950">&lt; 0.38ms</strong></div>
+          <div>Median Latency: <strong class="text-brand-950">0.13ms (p50)</strong></div>
           <div>CDC Overhead: <strong class="text-brand-950">&lt; 0.09ms</strong></div>
           <div>Stress Convergence: <strong class="text-brand-950">1,000 Ops / 1.02s</strong></div>
-          <div>CI Test Matrix: <strong class="text-emerald-700 font-semibold">13 / 13 Passed</strong></div>
+          <div>CI Test Matrix: <strong class="text-emerald-700 font-semibold">15 / 15 Passed</strong></div>
         </div>
       </div>
 
@@ -271,7 +271,7 @@
           </p>
         </div>
         <div class="p-2.5 sm:p-3 rounded-lg bg-brand-50 border border-brand-200/70 font-mono text-[11px] text-brand-800">
-          write_latency = <span class="text-emerald-700 font-semibold">&lt; 0.38ms</span>
+          median_latency = <span class="text-emerald-700 font-semibold">0.13ms (p50) / 0.34ms mean</span>
         </div>
       </div>
 
@@ -429,7 +429,7 @@ sync.onStatusChange(({ state }) =&gt; {
           </tr>
           <tr>
             <td class="px-4 py-2.5 sm:px-5 sm:py-3 font-semibold text-brand-950">CI Test Suite</td>
-            <td class="px-4 py-2.5 sm:px-5 sm:py-3 text-brand-500">13 unit & integration tests</td>
+            <td class="px-4 py-2.5 sm:px-5 sm:py-3 text-brand-500">15 unit, edge-case & integration tests</td>
             <td class="px-4 py-2.5 sm:px-5 sm:py-3 text-emerald-700 font-semibold">1.27 s</td>
             <td class="px-4 py-2.5 sm:px-5 sm:py-3 text-brand-500">GitHub Actions (Ubuntu/macOS/Win)</td>
           </tr>
