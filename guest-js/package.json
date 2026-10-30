@@ -1,6 +1,6 @@
 {
   "name": "tauri-plugin-sync",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Zero-Configuration Local-First SQLite Replication & Sync Engine for Tauri v2",
   "main": "./dist/index.cjs",

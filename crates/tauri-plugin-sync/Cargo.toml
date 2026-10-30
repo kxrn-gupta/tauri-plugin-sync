@@ -1,6 +1,6 @@
 [package]
 name = "tauri-plugin-sync"
-version = "0.1.0"
+version = "0.1.1"
 links = "tauri-plugin-sync"
 authors = ["Kxrn Gupta <founder@guptaventures.com>", "Gupta Ventures"]
 description = "Zero-Configuration Local-First SQLite Replication & Sync Engine for Tauri v2"
