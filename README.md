@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tauri v2](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://v2.tauri.app)
 [![CI](https://github.com/kxrn-gupta/tauri-plugin-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/kxrn-gupta/tauri-plugin-sync/actions)
+[![Tests](https://img.shields.io/badge/tests-13%20passed-brightgreen.svg)](https://github.com/kxrn-gupta/tauri-plugin-sync/actions)
 
 <p align="center">
   <img src="./media/demo_preview.gif" alt="tauri-plugin-sync Deterministic Offline Sync Demo" width="100%" />
