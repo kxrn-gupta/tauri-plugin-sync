@@ -256,6 +256,84 @@ mod tests {
     }
 
     #[test]
+    fn test_exact_timestamp_collision_tiebreaker_local_precedence() {
+        let conn = setup_test_db();
+
+        // Initial row
+        conn.execute(
+            "INSERT INTO todos (id, title, completed) VALUES ('tie-1', 'Initial', 0);",
+            [],
+        )
+        .unwrap();
+
+        // Local change queued at t = 5000
+        conn.execute(
+            "INSERT INTO _sync_changes (table_name, row_id, operation, data, timestamp, synced)
+             VALUES ('todos', 'tie-1', 'UPDATE', '{\"title\":\"Local Edit at 5000\"}', 5000, 0);",
+            [],
+        )
+        .unwrap();
+
+        // Remote change arrives with EXACT same timestamp t = 5000
+        let colliding_remote = ChangeRecord {
+            id: 88,
+            table: "todos".to_string(),
+            row_id: "tie-1".to_string(),
+            op: SyncOperation::Update,
+            data: Some(json!({
+                "id": "tie-1",
+                "title": "Remote Colliding Edit at 5000",
+                "completed": 1
+            })),
+            timestamp: 5000,
+        };
+
+        SyncEngine::apply_remote_record(&conn, &colliding_remote).unwrap();
+
+        // Local change takes precedence on tie (local_timestamp >= remote_timestamp)
+        let title: String = conn
+            .query_row("SELECT title FROM todos WHERE id = 'tie-1';", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(title, "Initial", "On microsecond collision tie, local state takes precedence and remote is dropped");
+    }
+
+    #[test]
+    fn test_tombstone_resurrection_when_remote_strictly_newer() {
+        let conn = setup_test_db();
+
+        conn.execute("INSERT INTO todos (id, title, completed) VALUES ('row-resurrect', 'Original', 0);", []).unwrap();
+        // Deletion at t = 1000
+        conn.execute("DELETE FROM todos WHERE id = 'row-resurrect';", []).unwrap();
+        // Set both change record and tombstone timestamp to 1000
+        conn.execute("UPDATE _sync_changes SET timestamp = 1000 WHERE row_id = 'row-resurrect';", []).unwrap();
+        conn.execute("UPDATE _sync_tombstones SET deleted_at = 1000 WHERE row_id = 'row-resurrect';", []).unwrap();
+
+        assert_eq!(CdcManager::get_tombstone(&conn, "todos", "row-resurrect").unwrap(), Some(1000));
+
+        // Legitimate newer remote mutation arrives at t = 2000 > 1000
+        let newer_mutation = ChangeRecord {
+            id: 20,
+            table: "todos".to_string(),
+            row_id: "row-resurrect".to_string(),
+            op: SyncOperation::Insert,
+            data: Some(json!({
+                "id": "row-resurrect",
+                "title": "Legitimately Recreated Task",
+                "completed": 0
+            })),
+            timestamp: 2000,
+        };
+
+        SyncEngine::apply_remote_record(&conn, &newer_mutation).unwrap();
+
+        // Row should be resurrected and tombstone cleared
+        let count: i64 = conn.query_row("SELECT COUNT(*) FROM todos WHERE id = 'row-resurrect';", [], |r| r.get(0)).unwrap();
+        assert_eq!(count, 1, "Legitimately newer remote mutation should recreate row");
+
+        assert_eq!(CdcManager::get_tombstone(&conn, "todos", "row-resurrect").unwrap(), None, "Tombstone should be pruned after newer remote write");
+    }
+
+    #[test]
     fn test_sql_injection_and_reserved_keywords_sanitization() {
         let conn = Connection::open_in_memory().unwrap();
 

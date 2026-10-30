@@ -6,22 +6,22 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tauri v2](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://v2.tauri.app)
 [![CI](https://github.com/kxrn-gupta/tauri-plugin-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/kxrn-gupta/tauri-plugin-sync/actions)
-[![Tests](https://img.shields.io/badge/tests-13%20passed-brightgreen.svg)](https://github.com/kxrn-gupta/tauri-plugin-sync/actions)
+[![Tests](https://img.shields.io/badge/tests-15%20passed-brightgreen.svg)](https://github.com/kxrn-gupta/tauri-plugin-sync/actions)
 
 <p align="center">
   <img src="./media/demo_preview.gif" alt="tauri-plugin-sync Deterministic Offline Sync Demo" width="100%" />
 </p>
 
-`tauri-plugin-sync` enables developers to build real-time, offline-first desktop applications with Tauri v2. Write to local SQLite with sub-millisecond (<0.38ms) latency, and let the background sync engine seamlessly replicate changesets to your remote cloud backend (Supabase, Postgres, or custom REST/WebSocket APIs) with automatic conflict resolution.
+`tauri-plugin-sync` enables developers to build real-time, offline-first desktop applications with Tauri v2. Write to local SQLite with sub-millisecond median latency (0.13ms p50 / 0.34ms mean), and let the background sync engine seamlessly replicate changesets to your remote cloud backend with deterministic Last-Write-Wins (LWW) conflict resolution.
 
 ---
 
 ## Features
 
-- **Sub-Millisecond Local Writes (<0.38ms):** Direct local SQLite operations in WAL mode with zero IPC latency penalties.
+- **Sub-Millisecond Local Writes:** Median (p50) latency of 0.13ms and mean latency of 0.34ms with zero network blocking.
 - **Automatic Change Data Capture (CDC):** Shadow triggers track inserts, updates, and deletes without changing existing application SQL.
 - **Offline-First Resilience:** Network disconnects queue mutations locally; auto-sync resumes instantly when back online.
-- **Deterministic Conflict Resolution:** Last-Write-Wins (LWW) with microsecond timestamps and tombstone deletion support.
+- **Deterministic Conflict Resolution:** Last-Write-Wins (LWW) with microsecond tiebreakers and tombstone deletion support.
 - **Infinite Loop Immunity:** Session-level recursion suppression guarantees inbound sync never re-triggers local CDC triggers.
 - **Modern TypeScript SDK:** Full TypeScript definitions and reactive status listeners.
 
@@ -35,7 +35,7 @@ Every benchmark and concurrency claim is independently verifiable locally:
 # Run the release-optimized microbenchmark suite
 cargo run --package tauri-plugin-sync --example benchmark --release
 
-# Run all 13 integration and concurrency tests
+# Run all 15 integration and edge-case tests
 cargo test --package tauri-plugin-sync -- --nocapture
 ```
 
@@ -43,8 +43,10 @@ cargo test --package tauri-plugin-sync -- --nocapture
 
 | Test Scenario | Measurement | Benchmark Result | Architectural Guarantee |
 | :--- | :--- | :---: | :--- |
-| **Local SQLite Mutation** | Single-row INSERT / UPDATE | `< 0.38 ms` | Pure local execution; zero network blocking |
-| **CDC Trigger Overhead** | Shadow table changelog capture | `< 0.09 ms` | Seamless SQL capture with zero application refactoring |
+| **Local SQLite Mutation (p50)** | Single-row INSERT / UPDATE | `0.13 ms` (p50) | Typical local execution; 120× faster than 60fps frame |
+| **Local SQLite Mutation (Mean)** | Average across 1,000 rows | `0.34 ms` (mean) | Sustained unbatched writes |
+| **Local SQLite Mutation (p99)** | Tail latency during checkpoint | `1.00 ms` (p99) | Predictable performance even during WAL checkpointing |
+| **CDC Trigger Overhead (p50)** | Shadow table changelog capture | `< 0.09 ms` (p50) | Seamless delta logging with zero application refactoring |
 | **Concurrent Write Stress** | 10 concurrent threads × 100 ops | `1,000 ops in ~1.02s` | Zero `database locked` errors via WAL mode busy timeout |
 | **Conflict Convergence** | LWW timestamp vs. Tombstones | `Deterministic` | Deletions strictly defeat stale historical updates |
 | **Schema Drift Resilience** | Unexpected server-side columns | `Zero failures` | Local engine strips unknown columns gracefully |
@@ -63,7 +65,7 @@ In your `src-tauri/Cargo.toml`:
 [dependencies]
 tauri-plugin-sync = "0.1"
 
-# Or directly from GitHub
+# Or directly from GitHub pinned tag
 # tauri-plugin-sync = { git = "https://github.com/kxrn-gupta/tauri-plugin-sync", tag = "v0.1.0-alpha" }
 ```
 
@@ -133,7 +135,7 @@ flowchart TD
         SDK --> Rust["Rust Core Engine (tauri-plugin-sync)"]
         
         subgraph LocalStorage ["Local-First Persistence"]
-            SQLite[("SQLite Embedded (WAL Mode)<br/>Latency < 0.38ms")]
+            SQLite[("SQLite Embedded (WAL Mode)<br/>p50 Latency: 0.13ms")]
             CDC["CDC Shadow Triggers<br/>(_sync_changes changelog)"]
             SQLite -. "Zero SQL Refactoring" .-> CDC
         end

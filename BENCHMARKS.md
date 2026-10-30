@@ -13,7 +13,7 @@ Any developer can run and verify these benchmarks locally from the repository ro
 cargo run --package tauri-plugin-sync --example benchmark --release
 ```
 
-### Run Full Test Matrix (13 Integration Tests)
+### Run Full Test Matrix (15 Integration & Edge-Case Tests)
 ```bash
 cargo test --package tauri-plugin-sync -- --nocapture
 ```
@@ -42,15 +42,17 @@ cargo test --package tauri-plugin-sync --test sync_tests test_concurrent_writes 
 
 Measurements conducted on an active disk-backed SQLite database operating in WAL mode:
 
-| Metric | Mean | p50 (Median) | p95 | p99 | SLA Target |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Baseline SQLite WAL Write** | 105.88 µs | 48.00 µs | 121.10 µs | 188.70 µs | — |
-| **CDC Monitored Write** | 337.00 µs | 129.70 µs | 246.40 µs | 1004.50 µs | **< 0.38 ms** ✅ |
-| **CDC Trigger Overhead** | 231.12 µs | 81.70 µs | 125.30 µs | 815.80 µs | **< 0.09 ms (p50)** ✅ |
+| Metric | Mean | p50 (Median) | p95 | p99 | Notes |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Baseline SQLite WAL Write** | 105.88 us | 48.00 us | 121.10 us | 188.70 us | Raw SQL without triggers |
+| **CDC Monitored Write** | 337.00 us | 129.70 us | 246.40 us | 1004.50 us | Full JSON changelog logging |
+| **Transparent CDC Overhead** | 231.12 us | 81.70 us | 125.30 us | 815.80 us | Delta capture & watermark cost |
 
-### Key Takeaways:
-- **Zero UI Freezes**: Median write latency is **0.129ms**, which is over **120× faster** than a 60fps frame budget (16.6ms).
-- **Trigger Overhead**: Transparently capturing table deltas into `_sync_changes` via SQLite `json_object()` introduces only **81.7 µs** overhead per mutation.
+### Statistical Analysis & Tail Latency (p99)
+- **Median (p50):** `129.70 us` (0.13 ms) — Typical local UI writes complete in approximately one-tenth of a millisecond.
+- **Mean (Average):** `337.00 us` (0.34 ms) — Average latency across 1,000 unbatched sequential writes.
+- **99th Percentile (p99):** `1004.50 us` (~1.00 ms) — Tail latency during periodic SQLite WAL page allocation and OS disk flush remains at ~1ms, well below the 16.6ms 60fps frame deadline.
+- **Trigger Overhead:** Median CDC trigger overhead is `81.70 us` (< 0.09 ms).
 
 ---
 
