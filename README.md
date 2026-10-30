@@ -66,7 +66,7 @@ In your `src-tauri/Cargo.toml`:
 tauri-plugin-sync = "0.1"
 
 # Or directly from GitHub pinned tag
-# tauri-plugin-sync = { git = "https://github.com/kxrn-gupta/tauri-plugin-sync", tag = "v0.1.0-alpha" }
+# tauri-plugin-sync = { git = "https://github.com/kxrn-gupta/tauri-plugin-sync", tag = "v0.1.1" }
 ```
 
 ### 2. Initialize in Tauri Builder
@@ -95,9 +95,9 @@ pub fn run() {
 In your frontend project:
 
 ```bash
-npm install "https://github.com/kxrn-gupta/tauri-plugin-sync#v0.1.0-alpha"
+npm install "https://github.com/kxrn-gupta/tauri-plugin-sync#v0.1.1"
 # or
-pnpm add "github:kxrn-gupta/tauri-plugin-sync#v0.1.0-alpha"
+pnpm add "github:kxrn-gupta/tauri-plugin-sync#v0.1.1"
 ```
 
 ---
