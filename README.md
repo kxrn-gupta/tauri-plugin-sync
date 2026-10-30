@@ -2,6 +2,7 @@
 
 > **Zero-Configuration Local-First SQLite Replication & Sync Engine for Tauri v2.**
 
+[![Crates.io](https://img.shields.io/crates/v/tauri-plugin-sync.svg)](https://crates.io/crates/tauri-plugin-sync)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tauri v2](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://v2.tauri.app)
 [![CI](https://github.com/kxrn-gupta/tauri-plugin-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/kxrn-gupta/tauri-plugin-sync/actions)
@@ -17,44 +18,53 @@
 
 ## Features
 
-- ⚡ **Sub-Millisecond Local Writes (<0.4ms):** Direct local SQLite operations in WAL mode with zero IPC latency penalties.
-- 🔄 **Automatic Change Data Capture (CDC):** Shadow triggers track inserts, updates, and deletes without changing existing application SQL.
-- 📴 **Offline-First Resilience:** Network disconnects queue mutations locally; auto-sync resumes instantly when back online.
-- 🛡️ **Deterministic Conflict Resolution:** Last-Write-Wins (LWW) with Lamport timestamps and tombstone deletion support.
-- 🌐 **Universal Backend Adapters:** Protocol-agnostic changeset exchange format.
-- 📦 **Modern TypeScript SDK:** Full TypeScript definitions and reactive status listeners.
+- **Sub-Millisecond Local Writes (<0.38ms):** Direct local SQLite operations in WAL mode with zero IPC latency penalties.
+- **Automatic Change Data Capture (CDC):** Shadow triggers track inserts, updates, and deletes without changing existing application SQL.
+- **Offline-First Resilience:** Network disconnects queue mutations locally; auto-sync resumes instantly when back online.
+- **Deterministic Conflict Resolution:** Last-Write-Wins (LWW) with microsecond timestamps and tombstone deletion support.
+- **Infinite Loop Immunity:** Session-level recursion suppression guarantees inbound sync never re-triggers local CDC triggers.
+- **Modern TypeScript SDK:** Full TypeScript definitions and reactive status listeners.
 
 ---
 
-## 📊 Verified Benchmarks & Concurrency Guarantees
+## Technical Credibility & Reproducible Benchmarks
 
-Reproducible benchmark metrics validated directly via the test suite (`cargo test`):
+Every benchmark and concurrency claim is independently verifiable locally:
+
+```bash
+# Run the release-optimized microbenchmark suite
+cargo run --package tauri-plugin-sync --example benchmark --release
+
+# Run all 13 integration and concurrency tests
+cargo test --package tauri-plugin-sync -- --nocapture
+```
+
+### Measured Performance (1,000 Iteration Sample)
 
 | Test Scenario | Measurement | Benchmark Result | Architectural Guarantee |
-| :--- | :--- | :--- | :--- |
+| :--- | :--- | :---: | :--- |
 | **Local SQLite Mutation** | Single-row INSERT / UPDATE | `< 0.38 ms` | Pure local execution; zero network blocking |
 | **CDC Trigger Overhead** | Shadow table changelog capture | `< 0.09 ms` | Seamless SQL capture with zero application refactoring |
 | **Concurrent Write Stress** | 10 concurrent threads × 100 ops | `1,000 ops in ~1.02s` | Zero `database locked` errors via WAL mode busy timeout |
-| **Conflict Convergence** | LWW timestamp vs. Tombstones | `100% Deterministic` | Deletions strictly defeat stale historical updates |
+| **Conflict Convergence** | LWW timestamp vs. Tombstones | `Deterministic` | Deletions strictly defeat stale historical updates |
 | **Schema Drift Resilience** | Unexpected server-side columns | `Zero failures` | Local engine strips unknown columns gracefully |
+
+👉 **Read the full [Benchmark Specification & Reproducibility Guide](./BENCHMARKS.md)** for detailed hardware environments and p50/p95/p99 latency percentiles.  
+👉 **Read the [Conflict Resolution & Edge Cases Specification](./CONFLICT_RESOLUTION.md)** for mathematical tiebreakers, tombstone precedence, and schema evolution rules.
 
 ---
 
 ## Installation
 
-> [!TIP]
-> **Pre-Release Review:** Ahead of locking the immutable `v0.1.0` release on crates.io and npm, early testers and maintainers can install directly via Git dependencies.
-
 ### 1. Add Rust Dependency
 In your `src-tauri/Cargo.toml`:
 
 ```toml
-# Git dependency (Pinned v0.1.0-alpha release)
 [dependencies]
-tauri-plugin-sync = { git = "https://github.com/kxrn-gupta/tauri-plugin-sync", tag = "v0.1.0-alpha" }
+tauri-plugin-sync = "0.1"
 
-# Or from crates.io (Once v0.1.0 is published)
-# tauri-plugin-sync = "0.1"
+# Or directly from GitHub
+# tauri-plugin-sync = { git = "https://github.com/kxrn-gupta/tauri-plugin-sync", tag = "v0.1.0-alpha" }
 ```
 
 ### 2. Initialize in Tauri Builder
@@ -83,13 +93,9 @@ pub fn run() {
 In your frontend project:
 
 ```bash
-# Git dependency (Pinned v0.1.0-alpha release)
 npm install "https://github.com/kxrn-gupta/tauri-plugin-sync#v0.1.0-alpha"
 # or
 pnpm add "github:kxrn-gupta/tauri-plugin-sync#v0.1.0-alpha"
-
-# Or from npm registry (Once published)
-# npm install tauri-plugin-sync
 ```
 
 ---
@@ -97,14 +103,19 @@ pnpm add "github:kxrn-gupta/tauri-plugin-sync#v0.1.0-alpha"
 ## Quick Start
 
 ```typescript
-import { SyncManager, syncNow, getStatus } from 'tauri-plugin-sync';
+import { SyncManager } from 'tauri-plugin-sync';
 
 // Zero-configuration: connects directly to the Rust-configured sync engine
-const sync = await SyncManager.init();
+const sync = await SyncManager.init({
+  database: 'app.db',
+  endpoint: 'https://api.example.com/sync',
+  tables: ['todos', 'notes'],
+  syncIntervalMs: 5000,
+});
 
 // Listen to real-time sync status events
 sync.onStatusChange((status) => {
-  console.log('Current status:', status); // 'idle' | 'syncing' | 'offline' | 'error'
+  console.log('Current status:', status.state); // 'idle' | 'syncing' | 'offline' | 'error'
 });
 
 // Trigger an immediate sync pass
@@ -118,7 +129,7 @@ await sync.syncNow();
 ```mermaid
 flowchart TD
     subgraph Client ["Desktop Client (Tauri v2)"]
-        UI["Frontend UI (React / Vue / Svelte)"] --> SDK["Guest-JS SDK (@tauri-apps/plugin-sync)"]
+        UI["Frontend UI (React / Vue / Svelte)"] --> SDK["Guest-JS SDK (tauri-plugin-sync)"]
         SDK --> Rust["Rust Core Engine (tauri-plugin-sync)"]
         
         subgraph LocalStorage ["Local-First Persistence"]
@@ -143,30 +154,21 @@ flowchart TD
     Worker <== "Batched Changesets" ==> API
 ```
 
-## Architecture & Documentation
-
-- 📖 **[Deep-Dive Architecture Article (Medium)](https://medium.com/@karan5028ji/building-an-offline-first-sqlite-sync-engine-for-tauri-v2-desktop-apps-d673f8ed54d1)**
-- [Product Requirements Document (PRD)](./PRD.md)
-- [Technical Architecture](./ARCHITECTURE.md)
-- [Roadmap](./ROADMAP.md)
-
 ---
 
-## 🚀 Ecosystem Extensions & Upcoming Adapters
+## Documentation & References
 
-`tauri-plugin-sync` core is **100% Free & Open Source under the MIT License**. To support complex production setups, we are developing turnkey backend adapters and enterprise capabilities:
-
-- 🟣 **Supabase & PostgreSQL Cloud Adapter:** Pre-built SQL migrations, Edge Functions, and Row Level Security (RLS) integration.
-- 🟡 **Gupta Ventures Managed Sync Engine:** Zero-backend hosted synchronization endpoint for rapid prototyping.
-- 🔒 **Enterprise E2EE (Zero-Knowledge):** Client-side AES-256-GCM encryption for privacy, healthcare, and finance apps.
-
-👉 **[Join the Early Access Waitlist](https://kxrn-gupta.github.io/tauri-plugin-sync/#waitlist)** to get notified when turnkey adapters launch or to request specific backend connectors.
+- 📖 **[Deep-Dive Architecture Article (Medium)](https://medium.com/@karan5028ji/building-an-offline-first-sqlite-sync-engine-for-tauri-v2-desktop-apps-d673f8ed54d1)**
+- 📊 **[Benchmark Specification & Reproducibility Guide](./BENCHMARKS.md)**
+- ⚖️ **[Conflict Resolution & Edge Cases Specification](./CONFLICT_RESOLUTION.md)**
+- 📐 **[Technical Architecture](./ARCHITECTURE.md)**
+- 🗺️ **[Roadmap](./ROADMAP.md)**
 
 ---
 
 ## Authors & Maintainers
-- **Chitresh (Kxrn) Gupta** ([@kxrn-gupta](https://github.com/kxrn-gupta)) - Author & System Architect, Gupta Ventures
-- Open-source contributors welcome!
+- **Chitresh (Kxrn) Gupta** ([@kxrn-gupta](https://github.com/kxrn-gupta)) — Author & System Architect, Gupta Ventures
+- Open-source contributions and community pull requests are welcome!
 
 ---
 
