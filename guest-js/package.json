@@ -20,7 +20,11 @@
     "build": "rollup -c rollup.config.js",
     "prepublishOnly": "npm run build"
   },
-  "author": "Karan Gupta (Gupta Ventures)",
+  "author": "Kxrn Gupta (Gupta Ventures)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kxrn-gupta/tauri-plugin-sync.git"
+  },
   "license": "MIT OR Apache-2.0",
   "dependencies": {
     "@tauri-apps/api": "^2.0.0"
