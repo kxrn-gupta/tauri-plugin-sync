@@ -6,7 +6,11 @@
 [![Tauri v2](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://v2.tauri.app)
 [![CI](https://github.com/kxrn-gupta/tauri-plugin-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/kxrn-gupta/tauri-plugin-sync/actions)
 
-`tauri-plugin-sync` enables developers to build real-time, offline-first desktop applications with Tauri v2. Write to local SQLite with 0ms latency, and let the background sync engine seamlessly replicate changesets to your remote cloud backend (Supabase, Postgres, or custom REST/WebSocket APIs) with automatic conflict resolution.
+<p align="center">
+  <img src="./media/demo_preview.gif" alt="tauri-plugin-sync Deterministic Offline Sync Demo" width="100%" />
+</p>
+
+`tauri-plugin-sync` enables developers to build real-time, offline-first desktop applications with Tauri v2. Write to local SQLite with sub-millisecond (<0.38ms) latency, and let the background sync engine seamlessly replicate changesets to your remote cloud backend (Supabase, Postgres, or custom REST/WebSocket APIs) with automatic conflict resolution.
 
 ---
 
@@ -107,6 +111,36 @@ await sync.syncNow();
 ```
 
 ---
+
+## Architecture & System Design
+
+```mermaid
+flowchart TD
+    subgraph Client ["Desktop Client (Tauri v2)"]
+        UI["Frontend UI (React / Vue / Svelte)"] --> SDK["Guest-JS SDK (@tauri-apps/plugin-sync)"]
+        SDK --> Rust["Rust Core Engine (tauri-plugin-sync)"]
+        
+        subgraph LocalStorage ["Local-First Persistence"]
+            SQLite[("SQLite Embedded (WAL Mode)<br/>Latency < 0.38ms")]
+            CDC["CDC Shadow Triggers<br/>(_sync_changes changelog)"]
+            SQLite -. "Zero SQL Refactoring" .-> CDC
+        end
+        
+        Rust <--> SQLite
+        CDC --> Outbox["Background Outbox Queue"]
+        Outbox --> Worker["Tokio Background Replicator"]
+    end
+
+    subgraph RemoteServer ["Remote Cloud Backend"]
+        API["Sync Gateway (HTTP POST / WebSocket)"]
+        Conflict["Deterministic Conflict Engine<br/>(LWW UTC Microsecond + Tombstones)"]
+        RemoteDB[("Primary Database<br/>(Postgres / Supabase / Custom)")]
+        
+        API --> Conflict --> RemoteDB
+    end
+
+    Worker <== "Batched Changesets" ==> API
+```
 
 ## Architecture & Documentation
 
