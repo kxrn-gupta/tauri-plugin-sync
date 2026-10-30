@@ -145,6 +145,7 @@ flowchart TD
 
 ## Architecture & Documentation
 
+- 📖 **[Deep-Dive Architecture Article (Medium)](https://medium.com/@karan5028ji/building-an-offline-first-sqlite-sync-engine-for-tauri-v2-desktop-apps-d673f8ed54d1)**
 - [Product Requirements Document (PRD)](./PRD.md)
 - [Technical Architecture](./ARCHITECTURE.md)
 - [Roadmap](./ROADMAP.md)
