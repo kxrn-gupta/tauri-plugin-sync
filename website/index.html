@@ -111,7 +111,7 @@
         </div>
         <div class="flex items-center space-x-2">
           <span class="font-bold text-sm tracking-tight text-brand-950">tauri-plugin-sync</span>
-          <span class="text-[10px] sm:text-[11px] font-mono px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 font-medium border border-brand-200">v0.1.1</span>
+          <span class="text-[10px] sm:text-[11px] font-mono px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 font-medium border border-brand-200">v0.1.2</span>
         </div>
       </a>
 
@@ -129,6 +129,7 @@
 
       <!-- Action Buttons (Mobile Optimized) -->
       <div class="flex items-center space-x-2">
+        <a href="https://www.npmjs.com/package/tauri-plugin-sync" target="_blank" class="hidden sm:inline-flex text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 hover:text-brand-950 transition">npm</a>
         <a href="https://crates.io/crates/tauri-plugin-sync" target="_blank" class="hidden sm:inline-flex text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 hover:text-brand-950 transition">
           crates.io
         </a>
@@ -167,11 +168,12 @@
       <div class="flex-1 flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white border border-brand-200 font-mono text-xs shadow-sm">
         <div class="flex items-center space-x-2 truncate">
           <span class="text-brand-400 select-none">$</span>
-          <span class="text-brand-950 font-medium select-all truncate text-[11px] sm:text-xs">cargo add tauri-plugin-sync</span>
+          <span id="install-cmd" class="text-brand-950 font-medium select-all truncate text-[11px] sm:text-xs">npm i tauri-plugin-sync</span>
         </div>
-        <button onclick="copyCommand()" id="cmd-copy-btn" class="ml-2 px-2.5 py-1 rounded-lg text-[11px] font-semibold text-brand-700 hover:text-brand-950 hover:bg-brand-50 border border-brand-200 transition active:scale-95 flex-shrink-0">
-          Copy
-        </button>
+        <div class="flex items-center space-x-1.5 flex-shrink-0 ml-2">
+          <button onclick="toggleCmd()" id="cmd-toggle-btn" class="px-2 py-1 rounded-md text-[10px] font-semibold text-brand-600 hover:text-brand-950 hover:bg-brand-50 border border-brand-200 transition active:scale-95" title="Switch between npm and cargo">cargo</button>
+          <button onclick="copyCommand()" id="cmd-copy-btn" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-brand-700 hover:text-brand-950 hover:bg-brand-50 border border-brand-200 transition active:scale-95">Copy</button>
+        </div>
       </div>
 
       <!-- View GitHub Button -->
@@ -463,6 +465,7 @@ sync.onStatusChange(({ state }) =&gt; {
       </div>
       <div class="flex items-center space-x-6">
         <a href="https://github.com/kxrn-gupta/tauri-plugin-sync" target="_blank" class="hover:text-brand-950 transition">GitHub</a>
+        <a href="https://www.npmjs.com/package/tauri-plugin-sync" target="_blank" class="hover:text-brand-950 transition">npm</a>
         <a href="https://crates.io/crates/tauri-plugin-sync" target="_blank" class="hover:text-brand-950 transition">crates.io</a>
         <a href="https://medium.com/@karan5028ji/building-an-offline-first-sqlite-sync-engine-for-tauri-v2-desktop-apps-d673f8ed54d1" target="_blank" class="hover:text-brand-950 transition">Medium</a>
       </div>
@@ -471,9 +474,23 @@ sync.onStatusChange(({ state }) =&gt; {
 
   <!-- Scripts -->
   <script>
-    // Copy Command Helper
+    // Command Switcher & Copy Helper
+    let currentCmd = 'npm i tauri-plugin-sync';
+    function toggleCmd() {
+      const cmdText = document.getElementById('install-cmd');
+      const toggleBtn = document.getElementById('cmd-toggle-btn');
+      if (currentCmd === 'npm i tauri-plugin-sync') {
+        currentCmd = 'cargo add tauri-plugin-sync';
+        cmdText.innerText = currentCmd;
+        toggleBtn.innerText = 'npm';
+      } else {
+        currentCmd = 'npm i tauri-plugin-sync';
+        cmdText.innerText = currentCmd;
+        toggleBtn.innerText = 'cargo';
+      }
+    }
     function copyCommand() {
-      navigator.clipboard.writeText('cargo add tauri-plugin-sync');
+      navigator.clipboard.writeText(currentCmd);
       const btn = document.getElementById('cmd-copy-btn');
       btn.innerText = 'Copied!';
       setTimeout(() => btn.innerText = 'Copy', 1500);
