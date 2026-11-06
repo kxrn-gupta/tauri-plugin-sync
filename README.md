@@ -2,6 +2,7 @@
 
 > **Zero-Configuration Local-First SQLite Replication & Sync Engine for Tauri v2.**
 
+[![npm](https://img.shields.io/npm/v/tauri-plugin-sync.svg)](https://www.npmjs.com/package/tauri-plugin-sync)
 [![Crates.io](https://img.shields.io/crates/v/tauri-plugin-sync.svg)](https://crates.io/crates/tauri-plugin-sync)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tauri v2](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://v2.tauri.app)
@@ -95,9 +96,9 @@ pub fn run() {
 In your frontend project:
 
 ```bash
-npm install "https://github.com/kxrn-gupta/tauri-plugin-sync#v0.1.1"
+npm install tauri-plugin-sync
 # or
-pnpm add "github:kxrn-gupta/tauri-plugin-sync#v0.1.1"
+pnpm add tauri-plugin-sync
 ```
 
 ---

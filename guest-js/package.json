@@ -1,6 +1,6 @@
 {
   "name": "tauri-plugin-sync",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Zero-Configuration Local-First SQLite Replication & Sync Engine for Tauri v2",
   "main": "./dist/index.cjs",
@@ -14,7 +14,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "build": "rollup -c rollup.config.js",
@@ -23,7 +24,7 @@
   "author": "Kxrn Gupta (Gupta Ventures)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kxrn-gupta/tauri-plugin-sync.git"
+    "url": "git+https://github.com/kxrn-gupta/tauri-plugin-sync.git"
   },
   "license": "MIT OR Apache-2.0",
   "dependencies": {
